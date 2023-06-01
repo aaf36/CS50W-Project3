@@ -17,6 +17,7 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#email-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
@@ -30,6 +31,7 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#email-view').style.display = 'none';
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
@@ -55,8 +57,18 @@ function load_mailbox(mailbox) {
 
           // function when div is clicked.
           element.addEventListener('click', function() {
+              view_email(email.id);
+
+              // update email status
+              fetch(`/emails/${email.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    read: true
+                })
+              })
               console.log('This element has been clicked!')
           });
+
           document.querySelector('#emails-view').append(element);
         });
     });
@@ -85,6 +97,24 @@ function send_email(event){
   .then(result => {
       console.log(result);
       load_mailbox('sent');
+  });
+}
+
+// function to retrieve email 
+function view_email(id){
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+      // Print email
+      console.log(email);
+
+      // add email's retrieved info to email_view div
+      let email_view = document.querySelector('#email-view');
+      email_view.innerHTML = `From: ${email.sender} <br> To: ${email.recipients} <br> Subject: ${email.subject} <br> Timestamp: ${email.timestamp} <br><br> ${email.body}`
+
+      document.querySelector('#emails-view').style.display = 'none';
+      document.querySelector('#compose-view').style.display = 'none';
+      email_view.style.display = 'block';
   });
 }
 
