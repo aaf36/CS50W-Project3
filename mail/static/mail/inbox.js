@@ -1,18 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
 
   // Use buttons to toggle between views
-  document.querySelector('#inbox').addEventListener('click', function() {
-    load_mailbox('inbox');
-    get_mail('inbox');
-  });
-  document.querySelector('#sent').addEventListener('click', function() {
-    load_mailbox('sent');
-    get_mail('sent');
-  });
-  document.querySelector('#archived').addEventListener('click', function() {
-    load_mailbox('archive');
-    get_mail('archive');
-  });
+  document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
+  document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
+  document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
 
   // function to send email
@@ -42,8 +33,37 @@ function load_mailbox(mailbox) {
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+     fetch(`/emails/${mailbox}`)
+    .then(response => response.json())
+    .then(emails => {
+        // Print emails
+        console.log(emails);
+
+        // render emails
+        emails.forEach(email => {
+          
+          // create and style div to store info about email.
+          const element = document.createElement('div');
+          element.innerHTML = `${email.sender} ${email.subject} ${email.timestamp}`;
+          element.style.border = 'solid';
+          element.style.borderWidth = '1px';
+          // checking email status
+          if(email.read === true){
+            element.style.backgroundColor= "#D3D3D3";
+          }
+
+          // function when div is clicked.
+          element.addEventListener('click', function() {
+              console.log('This element has been clicked!')
+          });
+          document.querySelector('#emails-view').append(element);
+        });
+    });
 }
 
+
+// function to send email
 function send_email(event){
   event.preventDefault();
 
@@ -68,30 +88,3 @@ function send_email(event){
   });
 }
 
-// function to retrieve mail
-function get_mail(mailbox){
-  fetch('/emails/'+mailbox)
-  .then(response => response.json())
-  .then(emails => {
-      // Print emails
-      console.log(emails);
-      // loop over each email and add them as divs to the mailbox
-      for (let i = 0; i < emails.length; i++) {
-        let email_sender = JSON.stringify(emails[i].sender);
-        let email_subject = JSON.stringify(emails[i].subject);
-        let email_timestamp = JSON.stringify(emails[i].timestamp);
-      
-        let email_div = document.createElement('div');
-        email_div.textContent = `Sender: ${email_sender}, Subject: ${email_subject}, Timestamp: ${email_timestamp}`;
-        email_div.style.border = 'solid';
-
-        if(emails[i].read===true){
-          email_div.style.backgroundColor = '#D3D3D3';
-        }
-        
-        let emails_view = document.getElementById('emails-view');
-        emails_view.appendChild(email_div);
-      }
-      
-  });
-}
