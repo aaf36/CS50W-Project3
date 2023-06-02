@@ -57,7 +57,7 @@ function load_mailbox(mailbox) {
 
           // function when div is clicked.
           element.addEventListener('click', function() {
-              view_email(email.id);
+              view_email(email.id, mailbox);
 
               // update email status
               fetch(`/emails/${email.id}`, {
@@ -66,7 +66,6 @@ function load_mailbox(mailbox) {
                     read: true
                 })
               })
-              console.log('This element has been clicked!')
           });
 
           document.querySelector('#emails-view').append(element);
@@ -101,7 +100,7 @@ function send_email(event){
 }
 
 // function to retrieve email 
-function view_email(id){
+function view_email(id, mailbox){
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
@@ -110,11 +109,30 @@ function view_email(id){
 
       // add email's retrieved info to email_view div
       let email_view = document.querySelector('#email-view');
-      email_view.innerHTML = `From: ${email.sender} <br> To: ${email.recipients} <br> Subject: ${email.subject} <br> Timestamp: ${email.timestamp} <br><br> ${email.body}`
+      email_view.innerHTML = `From: ${email.sender} <br> To: ${email.recipients} <br> Subject: ${email.subject} <br> Timestamp: ${email.timestamp} <br><br> ${email.body} <br><br>`
 
       document.querySelector('#emails-view').style.display = 'none';
       document.querySelector('#compose-view').style.display = 'none';
       email_view.style.display = 'block';
+
+      if(mailbox!='sent'){
+      const arch_btn = document.createElement('button');
+      arch_btn.innerHTML = !email.archived ? 'archive' : 'unarchive';
+      arch_btn.addEventListener('click', function() {
+        archiveOrUnarchive(email.id, email.archived);
+      });
+      document.querySelector('#email-view').append(arch_btn);
+    }
   });
 }
 
+// archive/unarchive function 
+function archiveOrUnarchive(id, status){
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        archived: !status
+    })
+  })
+  .then(() => load_mailbox('archive'))
+}
